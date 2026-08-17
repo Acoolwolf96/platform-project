@@ -1,0 +1,113 @@
+
+---
+
+- name: Common setup on all nodes
+
+  hosts: k3s_cluster
+
+  become: true
+
+  tasks:
+
+    - name: Install qemu-guest-agent
+
+      apt:
+
+        name: qemu-guest-agent
+
+        state: present
+
+        update_cache: true
+
+    - name: Enable and start qemu-guest-agent
+
+      systemd:
+
+        name: qemu-guest-agent
+
+        enabled: true
+
+        state: started
+
+- name: Install K3s server
+
+  hosts: k3s_server
+
+  become: true
+
+  tasks:
+
+    - name: Install K3s
+
+      shell: curl -sfL https://get.k3s.io | sh -
+
+      args:
+
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for node token to be generated
+
+      wait_for:
+
+        path: /var/lib/rancher/k3s/server/node-token
+
+    - name: Read node token
+
+      slurp:
+
+        src: /var/lib/rancher/k3s/server/node-token
+
+      register: node_token_raw
+
+    - name: Store token for the agent play below
+
+      set_fact:
+
+        k3s_node_token: "{{ node_token_raw.content | b64decode | trim }}"
+
+- name: Install K3s agent and join the cluster
+
+  hosts: k3s_agent
+
+  become: true
+
+  tasks:
+
+    - name: Install K3s and join server
+
+      shell: >
+
+        curl -sfL https://get.k3s.io |
+
+        K3S_URL=https://{{ hostvars['k3s-server']['ansible_host'] }}:6443
+
+        K3S_TOKEN={{ hostvars['k3s-server']['k3s_node_token'] }}
+
+        sh -
+
+      args:
+
+        creates: /usr/local/bin/k3s-agent
+
+- name: Install Argo CD on the server
+
+  hosts: k3s_server
+
+  become: true
+
+  tasks:
+
+    - name: Create argocd namespace
+
+      command: k3s kubectl create namespace argocd
+
+      register: ns_result
+
+      failed_when: ns_result.rc != 0 and 'AlreadyExists' not in ns_result.stderr
+
+      changed_when: "'created' in ns_result.stdout"
+
+    - name: Install Argo CD
+
+      command: k3s kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+

@@ -1,7 +1,7 @@
 locals {
   k3s_nodes = {
-    "k3s-server" = { vmid = 210, cores = 2, memory = 1536, ip = "10.0.0.210/24" }
-    "k3s-agent"  = { vmid = 211, cores = 1, memory = 1024, ip = "10.0.0.211/24" }
+    "k3s-server" = { vmid = 210, cores = 2, memory = 3072, ip = "10.0.0.210/24" }
+    "k3s-agent"  = { vmid = 211, cores = 1, memory = 1536, ip = "10.0.0.211/24" }
   }
 }
 
