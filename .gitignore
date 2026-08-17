@@ -1,0 +1,15 @@
+
+# Terraform secrets and state 
+
+terraform/terraform.tfvars
+
+.terraform/
+
+*.tfstate
+
+*.tfstate.*
+
+# Downloaded cloud image - too large for git, and easily re-downloaded
+
+template/*.img
+
