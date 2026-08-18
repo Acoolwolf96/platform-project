@@ -87,6 +87,12 @@ button:disabled {
   border-radius: 7px;
 }
 
+.progress {
+  display: block;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
 .success {
   display: block;
   background: #ecfdf3;
@@ -184,14 +190,20 @@ Create service
 </div>
 
 <script>
+
 async function loadTeams() {
   const response = await fetch('/api/teams');
-  const teams = await response.json();
 
+  if (!response.ok) {
+    throw new Error('Unable to load teams.');
+  }
+
+  const teams = await response.json();
   const select = document.getElementById('team');
 
   for (const team of teams) {
     const option = document.createElement('option');
+
     option.value = team.name;
     option.textContent =
       team.name.charAt(0).toUpperCase() +
@@ -199,6 +211,68 @@ async function loadTeams() {
 
     select.appendChild(option);
   }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function waitForService(team, name, status) {
+
+  const maxAttempts = 45;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+
+    const response = await fetch('/api/services');
+
+    if (!response.ok) {
+      throw new Error('Unable to read deployment status.');
+    }
+
+    const services = await response.json();
+
+    const service = services.find(
+      item => item.team === team && item.name === name
+    );
+
+    if (!service) {
+      status.className = 'status progress';
+      status.textContent =
+        '✓ Request submitted · ◐ Waiting for GitOps reconciliation';
+
+      await sleep(2000);
+      continue;
+    }
+
+    if (!service.healthy) {
+      status.className = 'status progress';
+      status.textContent =
+        `✓ Request submitted · ✓ GitOps synced · ◐ Deploying ` +
+        `(${service.availableReplicas}/${service.desiredReplicas} replicas)`;
+
+      await sleep(2000);
+      continue;
+    }
+
+    status.className = 'status success';
+
+    status.textContent =
+      `✓ Request submitted · ✓ GitOps synced · ✓ ${name} is healthy`;
+
+    await sleep(1200);
+
+    window.location.href =
+      `/service.html?team=${encodeURIComponent(team)}` +
+      `&name=${encodeURIComponent(name)}`;
+
+    return;
+  }
+
+  status.className = 'status progress';
+
+  status.textContent =
+    'The request was submitted successfully, but the deployment is still ' +
+    'being reconciled. You can return to the dashboard and check its status.';
 }
 
 document
@@ -210,12 +284,6 @@ document
     const button = document.getElementById('submit');
     const status = document.getElementById('status');
 
-    button.disabled = true;
-    button.textContent = 'Provisioning...';
-
-    status.className = 'status';
-    status.textContent = '';
-
     const request = {
       team: document.getElementById('team').value,
       name: document.getElementById('name').value,
@@ -224,12 +292,21 @@ document
       size: document.getElementById('size').value
     };
 
+    button.disabled = true;
+    button.textContent = 'Submitting...';
+
+    status.className = 'status progress';
+    status.textContent = '◐ Submitting request to the platform...';
+
     try {
+
       const response = await fetch('/api/provision', {
         method: 'POST',
+
         headers: {
           'Content-Type': 'application/json'
         },
+
         body: JSON.stringify(request)
       });
 
@@ -239,17 +316,22 @@ document
         throw new Error(text);
       }
 
-      const result = JSON.parse(text);
+      JSON.parse(text);
 
-      status.className = 'status success';
+      button.textContent = 'Provisioning...';
+
+      status.className = 'status progress';
       status.textContent =
-        `${result.service} submitted. GitOps is reconciling the new service.`;
+        '✓ Request submitted · ◐ Waiting for GitOps reconciliation';
 
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 3000);
+      await waitForService(
+        request.team,
+        request.name,
+        status
+      );
 
     } catch (error) {
+
       status.className = 'status error';
       status.textContent = error.message;
 
@@ -258,7 +340,13 @@ document
     }
   });
 
-loadTeams();
+loadTeams().catch(error => {
+  const status = document.getElementById('status');
+
+  status.className = 'status error';
+  status.textContent = error.message;
+});
+
 </script>
 
 </body>
