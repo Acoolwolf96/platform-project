@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-billing
+  namespace: argocd
+spec:
+  project: team-billing
+  source:
+    repoURL: https://github.com/Acoolwolf96/platform-project.git
+    targetRevision: main
+    path: gitops/team-billing
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-billing
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

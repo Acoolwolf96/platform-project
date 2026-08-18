@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-checkout
+  namespace: argocd
+spec:
+  project: team-checkout
+  source:
+    repoURL: https://github.com/Acoolwolf96/platform-project.git
+    targetRevision: main
+    path: gitops/team-checkout
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-checkout
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

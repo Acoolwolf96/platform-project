@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-search
+  namespace: argocd
+spec:
+  project: team-search
+  source:
+    repoURL: https://github.com/Acoolwolf96/platform-project.git
+    targetRevision: main
+    path: gitops/team-search
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-search
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
