@@ -53,33 +53,10 @@ K3s Cluster
    +-- team-billing
    +-- team-checkout
    +-- team-search
-Platform Stack
-Infrastructure
-Proxmox VE
-Terraform
-Ubuntu Server 24.04
-Configuration & Cluster Automation
-Ansible
-K3s
-Kubernetes
-GitOps
-GitHub
-Argo CD
-GitHub Actions
-GitHub Container Registry
-Developer Platform
-Go
-Embedded HTML/CSS/JavaScript
-Kubernetes API
-GitHub Contents API
-Networking
-Traefik
-Kubernetes Services
-NetworkPolicy
-Architecture
 
+```
 The current K3s cluster contains two virtual machines:
-
+```
 Proxmox Host
 |
 +-- k3s-server
@@ -91,7 +68,7 @@ Proxmox Host
     IP: 10.0.0.211
     1 vCPU
     1.5 GB RAM
-
+```
 The cluster currently uses:
 
 one K3s server/control-plane node
@@ -124,7 +101,7 @@ persistent volumes
 separate frontend service
 
 Current resource configuration:
-
+```
 CPU request:     25m
 CPU limit:       150m
 Memory request:  32Mi
@@ -136,7 +113,7 @@ CPU:     ~1m
 Memory:  ~4Mi
 Developer Portal Features
 Service Catalog
-
+```
 The dashboard automatically discovers workloads from Kubernetes and displays:
 
 service name
@@ -156,7 +133,7 @@ service name
 container image
 container port
 service size
-
+```
 Example:
 
 Team: Billing
@@ -164,7 +141,7 @@ Service: payments-api
 Image: nginx:alpine
 Port: 80
 Size: Small
-
+```
 The developer does not need to create:
 
 Kubernetes Deployments
@@ -178,7 +155,7 @@ The platform handles these details.
 Provisioning Workflow
 
 When a developer creates a service:
-
+```
 Developer
    |
    v
@@ -201,7 +178,7 @@ Argo CD detects Git change
    |
    v
 Kubernetes Deployment + Service
-
+```
 The IDP has read-only Kubernetes permissions.
 
 Application creation is performed through Git rather than direct Kubernetes write access.
@@ -213,7 +190,7 @@ Provisioning Status
 The portal tracks the asynchronous GitOps deployment process.
 
 Developers see:
-
+```
 Submitting request
        |
        v
@@ -227,7 +204,7 @@ Deploying
        |
        v
 Healthy
-
+```
 Once the workload becomes healthy, the developer is redirected to its service details page.
 
 Service Details
@@ -296,42 +273,11 @@ Argo CD projects restrict teams to their corresponding namespaces and Git paths.
 
 Network policies prevent unrestricted cross-namespace communication.
 
-GitOps Repository Structure
-platform-project/
-|
-+-- idp/
-|   +-- main.go
-|   +-- provision.go
-|   +-- Dockerfile
-|   +-- web/
-|       +-- index.html
-|       +-- create.html
-|       +-- service.html
-|
-+-- gitops/
-|   +-- apps/
-|   |
-|   +-- idp/
-|   |
-|   +-- team-billing/
-|   |
-|   +-- team-checkout/
-|   |
-|   +-- team-search/
-|
-+-- terraform/
-|
-+-- ansible/
-|
-+-- .github/
-    +-- workflows/
-        +-- idp-image.yml
-IDP Container Delivery
 
 Changes to the IDP source trigger GitHub Actions.
 
 The workflow:
-
+```
 Push IDP source
       |
       v
@@ -351,7 +297,7 @@ Argo CD
       |
       v
 Roll out updated IDP
-
+```
 Images are tagged using the Git commit SHA.
 
 Accessing the IDP
@@ -432,7 +378,7 @@ These operations should continue to use GitOps rather than direct Kubernetes mut
 Platform Maintenance Automation
 
 Extend Ansible to perform rolling node maintenance:
-
+```
 cordon
   |
 drain
@@ -444,7 +390,7 @@ wait for node
 verify Kubernetes Ready
   |
 uncordon
-
+```
 Application replicas and placement policies will be added before demonstrating workload availability during node maintenance.
 
 Design Principles
@@ -476,7 +422,7 @@ Project Goal
 The goal of this project is to demonstrate how an internal platform can provide developers with a simple self-service experience while the platform layer handles infrastructure automation, Kubernetes configuration, GitOps reconciliation, resource governance, and workload isolation.
 
 The project focuses on the boundary between:
-
+```
 Developer Experience
         |
         v
@@ -487,5 +433,4 @@ GitOps & Kubernetes
         |
         v
 Infrastructure
-
-rather than requiring application developers to understand every layer underneath the platform.
+```
