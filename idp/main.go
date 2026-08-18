@@ -46,6 +46,10 @@ type deploymentList struct {
 					Containers []struct {
 						Name  string `json:"name"`
 						Image string `json:"image"`
+						Resources struct {
+							Requests map[string]string `json:"requests"`
+							Limits   map[string]string `json:"limits"`
+						} `json:"resources"`
 					} `json:"containers"`
 				} `json:"spec"`
 			} `json:"template"`
@@ -78,6 +82,10 @@ type serviceView struct {
 	DesiredReplicas   int    `json:"desiredReplicas"`
 	AvailableReplicas int    `json:"availableReplicas"`
 	Healthy           bool   `json:"healthy"`
+	CPURequest        string `json:"cpuRequest"`
+	CPULimit          string `json:"cpuLimit"`
+	MemoryRequest     string `json:"memoryRequest"`
+	MemoryLimit       string `json:"memoryLimit"`
 }
 
 type teamView struct {
@@ -160,8 +168,19 @@ func services(k *kubeClient) ([]serviceView, error) {
 		}
 
 		image := ""
+		cpuRequest := ""
+		cpuLimit := ""
+		memoryRequest := ""
+		memoryLimit := ""
+
 		if len(d.Spec.Template.Spec.Containers) > 0 {
-			image = d.Spec.Template.Spec.Containers[0].Image
+			container := d.Spec.Template.Spec.Containers[0]
+
+			image = container.Image
+			cpuRequest = container.Resources.Requests["cpu"]
+			cpuLimit = container.Resources.Limits["cpu"]
+			memoryRequest = container.Resources.Requests["memory"]
+			memoryLimit = container.Resources.Limits["memory"]
 		}
 
 		result = append(result, serviceView{
@@ -169,6 +188,10 @@ func services(k *kubeClient) ([]serviceView, error) {
 			Team:              strings.TrimPrefix(d.Metadata.Namespace, "team-"),
 			Namespace:         d.Metadata.Namespace,
 			Image:             image,
+			CPURequest:        cpuRequest,
+			CPULimit:          cpuLimit,
+			MemoryRequest:     memoryRequest,
+			MemoryLimit:       memoryLimit,
 			DesiredReplicas:   d.Spec.Replicas,
 			AvailableReplicas: d.Status.AvailableReplicas,
 			Healthy: d.Spec.Replicas > 0 &&

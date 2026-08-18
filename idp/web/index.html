@@ -115,7 +115,7 @@ body {
 .service {
   padding: 17px 20px;
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 120px;
+  grid-template-columns: 1.5fr 1fr 1fr 120px 110px;
   gap: 15px;
   align-items: center;
   border-bottom: 1px solid #f0f1f3;
@@ -142,6 +142,21 @@ body {
 .unhealthy {
   color: #b42318;
   font-weight: 600;
+}
+
+.details-link {
+  display: inline-block;
+  text-decoration: none;
+  background: #f3f4f6;
+  color: #111827;
+  padding: 8px 11px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.details-link:hover {
+  background: #e5e7eb;
 }
 
 .empty {
@@ -308,6 +323,15 @@ function renderServices() {
 
         <div class="${service.healthy ? 'healthy' : 'unhealthy'}">
           ${service.healthy ? '● Healthy' : '● Degraded'}
+        </div>
+
+        <div>
+          <a
+            class="details-link"
+            href="/service.html?team=${encodeURIComponent(service.team)}&name=${encodeURIComponent(service.name)}"
+          >
+            View details
+          </a>
         </div>
 
       </div>

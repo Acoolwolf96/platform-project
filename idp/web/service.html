@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Details</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #f6f7f9;
+  color: #17202a;
+}
+
+.page {
+  max-width: 900px;
+  margin: 45px auto;
+  padding: 0 20px;
+}
+
+.back {
+  text-decoration: none;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.header {
+  margin: 25px 0;
+}
+
+.header h1 {
+  margin-bottom: 6px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 22px;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 17px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.healthy {
+  color: #16803c;
+}
+
+.unhealthy {
+  color: #b42318;
+}
+
+.error {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 18px;
+  border-radius: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<a href="/" class="back">← Back to services</a>
+
+<div id="content">
+  <p class="muted">Loading service...</p>
+</div>
+
+</div>
+
+<script>
+
+function display(value) {
+  return value || 'Not specified';
+}
+
+async function loadService() {
+
+  const params = new URLSearchParams(window.location.search);
+
+  const team = params.get('team');
+  const name = params.get('name');
+
+  if (!team || !name) {
+    throw new Error('Service information is missing.');
+  }
+
+  const response = await fetch('/api/services');
+
+  if (!response.ok) {
+    throw new Error('Unable to read platform services.');
+  }
+
+  const services = await response.json();
+
+  const service = services.find(
+    item => item.team === team && item.name === name
+  );
+
+  if (!service) {
+    throw new Error('Service was not found.');
+  }
+
+  const statusClass =
+    service.healthy ? 'healthy' : 'unhealthy';
+
+  const statusText =
+    service.healthy ? '● Healthy' : '● Degraded';
+
+  document.title = `${service.name} · Developer Platform`;
+
+  document.getElementById('content').innerHTML = `
+
+    <div class="header">
+      <h1>${service.name}</h1>
+      <div class="muted">${service.team} team</div>
+    </div>
+
+    <div class="grid">
+
+      <section class="card">
+        <h2>Service</h2>
+
+        <div class="row">
+          <span>Status</span>
+          <span class="value ${statusClass}">
+            ${statusText}
+          </span>
+        </div>
+
+        <div class="row">
+          <span>Team</span>
+          <span class="value">${service.team}</span>
+        </div>
+
+        <div class="row">
+          <span>Namespace</span>
+          <span class="value">${service.namespace}</span>
+        </div>
+
+        <div class="row">
+          <span>Image</span>
+          <span class="value">${service.image}</span>
+        </div>
+
+        <div class="row">
+          <span>Replicas</span>
+          <span class="value">
+            ${service.availableReplicas}/${service.desiredReplicas}
+          </span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Resources</h2>
+
+        <div class="row">
+          <span>CPU request</span>
+          <span class="value">${display(service.cpuRequest)}</span>
+        </div>
+
+        <div class="row">
+          <span>CPU limit</span>
+          <span class="value">${display(service.cpuLimit)}</span>
+        </div>
+
+        <div class="row">
+          <span>Memory request</span>
+          <span class="value">${display(service.memoryRequest)}</span>
+        </div>
+
+        <div class="row">
+          <span>Memory limit</span>
+          <span class="value">${display(service.memoryLimit)}</span>
+        </div>
+      </section>
+
+    </div>
+  `;
+}
+
+loadService().catch(error => {
+  document.getElementById('content').innerHTML =
+    `<div class="error">${error.message}</div>`;
+});
+
+</script>
+
+</body>
+</html>
