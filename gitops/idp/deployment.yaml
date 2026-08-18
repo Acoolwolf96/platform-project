@@ -30,7 +30,7 @@ spec:
 
       containers:
         - name: idp
-          image: ghcr.io/acoolwolf96/platform-idp:2d42c80d7ca67afde71d34e44a1bb19c2a254a98
+          image: ghcr.io/acoolwolf96/platform-idp:ba63ae21031440f252ecb1e2c277b6ea0a663c86
           imagePullPolicy: Always
 
           env:
