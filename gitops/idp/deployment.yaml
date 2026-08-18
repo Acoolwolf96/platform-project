@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-idp
+  namespace: platform-system
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: platform-idp
+
+  template:
+    metadata:
+      labels:
+        app: platform-idp
+
+    spec:
+      serviceAccountName: platform-idp
+
+      nodeSelector:
+        kubernetes.io/hostname: k3s-agent
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: idp
+          image: ghcr.io/acoolwolf96/platform-idp:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 8080
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+
+            limits:
+              cpu: 150m
+              memory: 96Mi
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 20
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL

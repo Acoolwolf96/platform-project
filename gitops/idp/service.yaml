@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-idp
+  namespace: platform-system
+
+spec:
+  type: NodePort
+
+  selector:
+    app: platform-idp
+
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 30080
