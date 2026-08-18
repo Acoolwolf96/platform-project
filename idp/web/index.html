@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internal Developer Platform</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: #f6f7f9;
+  color: #17202a;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #111827;
+  color: white;
+  padding: 24px 18px;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 34px;
+}
+
+.nav-item {
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin-bottom: 5px;
+  color: #cbd5e1;
+}
+
+.nav-item.active {
+  background: #1f2937;
+  color: white;
+}
+
+.main {
+  padding: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.team-selector select {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid #d1d5db;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+  gap: 18px;
+  margin: 28px 0;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.card .value {
+  font-size: 27px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.section {
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.button {
+  background: #111827;
+  color: white;
+  border: 0;
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.service {
+  padding: 17px 20px;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 120px;
+  gap: 15px;
+  align-items: center;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.service:last-child {
+  border-bottom: 0;
+}
+
+.service-name {
+  font-weight: 650;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.healthy {
+  color: #16803c;
+  font-weight: 600;
+}
+
+.unhealthy {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.empty {
+  padding: 30px;
+  color: #6b7280;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">Developer Platform</div>
+
+    <div class="nav-item active">Overview</div>
+    <div class="nav-item">Services</div>
+    <div class="nav-item">Deployments</div>
+    <div class="nav-item">Resources</div>
+    <div class="nav-item">Documentation</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="header">
+      <div>
+        <h1>Platform Overview</h1>
+        <div class="muted">Self-service platform for engineering teams</div>
+      </div>
+
+      <div class="team-selector">
+        <select id="teamSelect">
+          <option value="">All teams</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="muted">Teams</div>
+        <div class="value" id="teamCount">-</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Services</div>
+        <div class="value" id="serviceCount">-</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Platform</div>
+        <div class="value" id="platformHealth">-</div>
+      </div>
+
+    </div>
+
+    <section class="section">
+
+      <div class="section-header">
+        <div>
+          <strong>Your services</strong>
+          <div class="muted">Applications managed by the platform</div>
+        </div>
+
+        <button class="button" onclick="createService()">
+          + Create service
+        </button>
+      </div>
+
+      <div id="services"></div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+
+let services = [];
+
+async function load() {
+
+  const [overviewResponse, teamResponse, serviceResponse] =
+    await Promise.all([
+      fetch('/api/overview'),
+      fetch('/api/teams'),
+      fetch('/api/services')
+    ]);
+
+  const overview = await overviewResponse.json();
+  const teams = await teamResponse.json();
+  services = await serviceResponse.json();
+
+  document.getElementById('teamCount').textContent =
+    overview.teams;
+
+  document.getElementById('serviceCount').textContent =
+    overview.services;
+
+  document.getElementById('platformHealth').innerHTML =
+    overview.readyNodes === overview.totalNodes
+      ? '<span class="healthy">Healthy</span>'
+      : '<span class="unhealthy">Degraded</span>';
+
+  const select = document.getElementById('teamSelect');
+
+  for (const team of teams) {
+    const option = document.createElement('option');
+    option.value = team.name;
+    option.textContent =
+      team.name.charAt(0).toUpperCase() + team.name.slice(1);
+
+    select.appendChild(option);
+  }
+
+  renderServices();
+}
+
+function renderServices() {
+
+  const selectedTeam =
+    document.getElementById('teamSelect').value;
+
+  const filtered =
+    selectedTeam
+      ? services.filter(s => s.team === selectedTeam)
+      : services;
+
+  const container =
+    document.getElementById('services');
+
+  if (!filtered.length) {
+    container.innerHTML =
+      '<div class="empty">No services found.</div>';
+    return;
+  }
+
+  container.innerHTML =
+    filtered.map(service => `
+
+      <div class="service">
+
+        <div>
+          <div class="service-name">
+            ${service.name}
+          </div>
+
+          <div class="muted">
+            ${service.team}
+          </div>
+        </div>
+
+        <div>
+          ${service.image}
+        </div>
+
+        <div>
+          ${service.availableReplicas}/${service.desiredReplicas}
+          replicas
+        </div>
+
+        <div class="${service.healthy ? 'healthy' : 'unhealthy'}">
+          ${service.healthy ? '● Healthy' : '● Degraded'}
+        </div>
+
+      </div>
+
+    `).join('');
+}
+
+document.getElementById('teamSelect')
+  .addEventListener('change', renderServices);
+
+function createService() {
+  alert('Self-service provisioning is the next workflow we will implement.');
+}
+
+load().catch(error => {
+  document.getElementById('services').innerHTML =
+    '<div class="empty">Unable to load platform state: ' +
+    error.message +
+    '</div>';
+});
+
+</script>
+
+</body>
+</html>
