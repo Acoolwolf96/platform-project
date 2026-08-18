@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Service</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #f6f7f9;
+  color: #17202a;
+}
+
+.page {
+  max-width: 720px;
+  margin: 50px auto;
+  padding: 0 20px;
+}
+
+.back {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-top: 20px;
+  padding: 30px;
+}
+
+h1 { margin-top: 0; }
+
+.description {
+  color: #6b7280;
+  margin-bottom: 28px;
+}
+
+.field {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+input, select {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 7px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 5px;
+}
+
+button {
+  background: #111827;
+  color: white;
+  border: 0;
+  padding: 11px 18px;
+  border-radius: 7px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.status {
+  display: none;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 7px;
+}
+
+.success {
+  display: block;
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.error {
+  display: block;
+  background: #fef2f2;
+  color: #991b1b;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<a class="back" href="/">← Back to platform</a>
+
+<div class="card">
+
+<h1>Create service</h1>
+
+<p class="description">
+Provision a workload through the platform GitOps workflow.
+</p>
+
+<form id="form">
+
+<div class="field">
+<label>Team</label>
+<select id="team" required>
+<option value="">Select team</option>
+</select>
+</div>
+
+<div class="field">
+<label>Service name</label>
+<input
+  id="name"
+  placeholder="payments-api"
+  pattern="[a-z0-9-]+"
+  required
+>
+<div class="hint">
+Lowercase letters, numbers and hyphens.
+</div>
+</div>
+
+<div class="field">
+<label>Container image</label>
+<input
+  id="image"
+  value="nginx:alpine"
+  placeholder="ghcr.io/company/service:v1"
+  required
+>
+</div>
+
+<div class="field">
+<label>Container port</label>
+<input
+  id="port"
+  type="number"
+  value="80"
+  min="1"
+  max="65535"
+  required
+>
+</div>
+
+<div class="field">
+<label>Service size</label>
+
+<select id="size">
+<option value="small">
+Small — 25m CPU / 32Mi memory
+</option>
+
+<option value="medium">
+Medium — 50m CPU / 64Mi memory
+</option>
+</select>
+</div>
+
+<button id="submit" type="submit">
+Create service
+</button>
+
+<div id="status" class="status"></div>
+
+</form>
+</div>
+</div>
+
+<script>
+async function loadTeams() {
+  const response = await fetch('/api/teams');
+  const teams = await response.json();
+
+  const select = document.getElementById('team');
+
+  for (const team of teams) {
+    const option = document.createElement('option');
+    option.value = team.name;
+    option.textContent =
+      team.name.charAt(0).toUpperCase() +
+      team.name.slice(1);
+
+    select.appendChild(option);
+  }
+}
+
+document
+  .getElementById('form')
+  .addEventListener('submit', async event => {
+
+    event.preventDefault();
+
+    const button = document.getElementById('submit');
+    const status = document.getElementById('status');
+
+    button.disabled = true;
+    button.textContent = 'Provisioning...';
+
+    status.className = 'status';
+    status.textContent = '';
+
+    const request = {
+      team: document.getElementById('team').value,
+      name: document.getElementById('name').value,
+      image: document.getElementById('image').value,
+      port: Number(document.getElementById('port').value),
+      size: document.getElementById('size').value
+    };
+
+    try {
+      const response = await fetch('/api/provision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(request)
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(text);
+      }
+
+      const result = JSON.parse(text);
+
+      status.className = 'status success';
+      status.textContent =
+        `${result.service} submitted. GitOps is reconciling the new service.`;
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+
+    } catch (error) {
+      status.className = 'status error';
+      status.textContent = error.message;
+
+      button.disabled = false;
+      button.textContent = 'Create service';
+    }
+  });
+
+loadTeams();
+</script>
+
+</body>
+</html>

@@ -319,7 +319,7 @@ document.getElementById('teamSelect')
   .addEventListener('change', renderServices);
 
 function createService() {
-  alert('Self-service provisioning is the next workflow we will implement.');
+  window.location.href = '/create.html';
 }
 
 load().catch(error => {

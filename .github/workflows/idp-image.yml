@@ -9,7 +9,7 @@ on:
       - '.github/workflows/idp-image.yml'
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set image name
         run: |
-          echo "IMAGE_NAME=$(echo ghcr.io/${GITHUB_REPOSITORY_OWNER}/platform-idp | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ghcr.io/${GITHUB_REPOSITORY_OWNER}/platform-idp | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Build and push IDP
         uses: docker/build-push-action@v6
@@ -37,5 +37,24 @@ jobs:
           context: ./idp
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+
+      - name: Update GitOps image
+        run: |
+          sed -i \
+            "s|image: ghcr.io/acoolwolf96/platform-idp:.*|image: ${IMAGE_NAME}:${GITHUB_SHA}|" \
+            gitops/idp/deployment.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add gitops/idp/deployment.yaml
+
+          if git diff --cached --quiet; then
+            echo "No image update required"
+            exit 0
+          fi
+
+          git commit -m "Update IDP image to ${GITHUB_SHA::7}"
+          git push

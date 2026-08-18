@@ -33,6 +33,22 @@ spec:
           image: ghcr.io/acoolwolf96/platform-idp:latest
           imagePullPolicy: Always
 
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: platform-idp-github
+                  key: token
+
+            - name: GITHUB_OWNER
+              value: "Acoolwolf96"
+
+            - name: GITHUB_REPO
+              value: "platform-project"
+
+            - name: GITHUB_BRANCH
+              value: "main"
+
           ports:
             - containerPort: 8080
 

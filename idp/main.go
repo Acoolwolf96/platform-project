@@ -236,6 +236,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/api/provision", provisionHandler(kube))
+
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok"})
 	})
