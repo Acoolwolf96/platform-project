@@ -2,7 +2,7 @@
 
 A resource-efficient Internal Developer Platform (IDP) built on Kubernetes, GitOps, Infrastructure as Code, and configuration automation.
 
-Application teams provision and inspect workloads through a developer-facing portal without interacting directly with Kubernetes, Argo CD, Terraform, or Ansible. The platform demonstrates core platform engineering patterns: self-service provisioning, tenant isolation, GitOps reconciliation, resource governance, and developer abstraction.
+Application teams provision and inspect workloads through a developer portal without interacting directly with Kubernetes, Argo CD, Terraform, or Ansible. The platform demonstrates core platform engineering patterns: self-service provisioning, tenant isolation, GitOps reconciliation, resource governance, and developer abstraction.
 
 ---
 
