@@ -8,7 +8,7 @@ Application teams provision and inspect workloads through a developer portal wit
 
 ## Overview
 
-The platform serves three application teams :— Billing, Checkout, and Search. Each team gets an isolated Kubernetes namespace with resource quotas, network policies, and Argo CD project boundaries.
+The platform serves three application teams: Billing, Checkout, and Search. Each team gets an isolated Kubernetes namespace with resource quotas, network policies, and Argo CD project boundaries.
 
 Instead of applying Kubernetes manifests directly, the IDP writes the desired application configuration to GitHub. Argo CD detects the change and reconciles it into the cluster.
 
